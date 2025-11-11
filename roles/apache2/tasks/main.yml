@@ -1,0 +1,9 @@
+---
+# This playbook will install apache.
+
+- name: install apache2
+  shell: apt-get update && apt-get -y install apache2
+  ignore_errors: yes
+  
+- name: start apache2
+  shell: sudo service apache2 start
