@@ -1,0 +1,19 @@
+---
+# This playbook tests the script module on Windows hosts
+
+- name: Run Ansible Tag Test
+  hosts: all 
+  gather_facts: false
+  tasks:
+    - name: Run tag 1
+      copy:
+        content: 'hello tag 1'
+        dest: '/tmp/tag1.txt'
+      tags: tag1
+    - name: Run tag 2
+      copy:
+        content: 'hello tag 2'
+        dest: '/tmp/tag2.txt'
+      tags: tag2
+
+

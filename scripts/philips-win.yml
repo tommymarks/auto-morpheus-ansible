@@ -1,0 +1,25 @@
+---
+# This playbook uses the win_ping module to test connectivity to Windows hosts
+- name: test philips
+  hosts: all 
+
+  tasks:
+    - name: ping the vm
+      win_ping:
+
+    - name: Copy all scripts
+      win_copy:
+        src: ./scripts/
+        dest: c:\windows\temp
+        force: yes
+
+    - name: Registry 'Config\AnnounceFlags' Update
+      win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\W32time\Config
+        name: AccounceFlags
+        data: 5
+        type: dword
+
+    - name: Change Power scheme
+      win_power_plan:
+        name: High performance

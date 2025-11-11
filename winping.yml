@@ -1,0 +1,8 @@
+---
+# This playbook uses the win_ping module to test connectivity to Windows hosts
+- name: Ping 
+  hosts: all
+
+  tasks:
+  - name: "winping {{morhost}}"
+    win_ping:

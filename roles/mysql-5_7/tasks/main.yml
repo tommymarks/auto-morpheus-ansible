@@ -1,0 +1,145 @@
+---
+# This playbook will install mysql and create db user and give permissions.
+
+- name: add 3A79BD29 key for MySQL repo
+  copy:
+    src: files/3A79BD29.gpg
+    dest: /usr/share/keyrings/mysql-archive-keyring.gpg
+  ignore_errors: yes
+
+- name: set mysql repo
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/mysql-archive-keyring.gpg] https://repo.mysql.com/apt/ubuntu {{ ansible_distribution_release }} mysql-5.7"
+    filename: mysql
+  ignore_errors: no
+  
+- name: Set data directory to empty string
+  debconf:
+    name: mysql-community-server
+    question: 'mysql-community-server/data-dir'
+    value: ''
+    vtype: select
+
+- name: Set remove test database to false
+  debconf:
+    name: mysql-community-server
+    question: 'mysql-community-server/remove-test-db'
+    value: 'false'
+    vtype: select
+
+- name: Set root Password
+  debconf:
+    name: mysql-community-server
+    question: 'mysql-community-server/root-pass'
+    value: 'password' # Set as a variable
+    vtype: password
+
+- name: Set root Password Again
+  debconf:
+    name: mysql-community-server
+    question: 'mysql-community-server/re-root-pass'
+    value: 'password' # Set as a variable
+    vtype: password
+
+- name: install mysql-server
+  apt:
+    name:
+      - mysql-server
+    state: present
+    install_recommends: no
+
+- name: Stop service mysql, if started
+  service:
+    name: mysql
+    state: stopped
+
+- name: Ansible delete directory /var/lib/mysql
+  file:
+    path: /var/lib/mysql
+    state: absent
+
+- name: Create MySQL data directory
+  file:
+    path: /var/lib/mysql
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: 0750
+
+- name: Create MySQL run directory
+  file:
+    path: /var/run/mysqld
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: 0750
+
+- name: stop and disable mysql service
+  systemd:
+    name: mysql
+    enabled: no
+    state: stopped
+  ignore_errors: no
+
+- name: 
+  template: 
+    src: my.cnf.j2 
+    dest: /etc/mysql/my.cnf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: 
+  template: 
+    src: mysqld.cnf.j2 
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: set home directory for mysql to /var/lib/mysql
+  user: 
+    name: mysql
+    home: /var/lib/mysql
+    shell: /bin/false
+    comment: MySQL Server
+
+- name: Create Morpheus MySQL entrypoint
+  template: 
+    src: morpheus-entrypoint.sh.j2
+    dest: /entrypoint.sh
+    owner: root
+    group: root
+    mode: 755
+
+- name: init script for MySQL
+  template: 
+    src: mysql.init.j2 
+    dest: /etc/init.d/mysql
+    owner: mysql
+    group: mysql
+    mode: 0755
+
+- name: ensure mysql general log exists
+  file: 
+    path: /var/log/mysql/mysql.log 
+    state: touch
+    owner: mysql
+    group: adm
+    mode: 0640
+
+- name: ensure mysql slow query log exists
+  file: 
+    path: /var/log/mysql/slow.log
+    state: touch
+    owner: mysql
+    group: adm
+    mode: 0640
+
+- name: ensure mysql error log exists
+  file: 
+    path: /var/log/mysql/error.log
+    state: touch
+    owner: mysql
+    group: adm
+    mode: 0640

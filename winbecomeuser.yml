@@ -1,0 +1,23 @@
+---
+- hosts: all
+  gather_facts: false
+  become_method: runas
+  vars:
+    ansible_become_pass: P@55w0rd!
+
+  tasks:
+    - name: winshell whoami
+      win_shell: whoami
+      register: whoami
+      become: yes
+      become_user: Administrator
+    - debug:
+        msg: "{{whoami}}"
+    - name: replace the entries of Deny log on locally
+      win_user_right:
+        name: SeDenyInteractiveLogonRight
+        users:
+        - Guest
+        action: set
+        become: yes
+        become_user: Administrator
